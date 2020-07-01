@@ -66,43 +66,40 @@ class MarkovModel:
             self.last_state = index2(r < self.trans[self.last_state,:], True)
             return self.last_state
 
-# From user MSeifert on StackOverflow
-# https://stackoverflow.com/a/41578614
-@njit
-def index(array, item):
-    for idx, val in np.ndenumerate(array):
-        if val == item:
-            return idx
+if __name__ == "__main__":
 
-states = {0:'WH', 1:'WM', 2:'RH', 3:'RM'}
-nstates = len(states)
-prob = np.cumsum([.05, .1, .7, .15])
-#prob = np.cumsum([.25, .25, .25, .25])
-seq_len = 10000
-random.seed(1337)
+    states = {0:'WH', 1:'WM', 2:'RH', 3:'RM'}
+    nstates = len(states)
 
-sequence = []
+    print("We will generate a markov model with {} states, \n{}\n".format(nstates, states))
 
-for i in range(seq_len):
-    sequence.append(index(random.random() < prob, True)[0])
+    prob = [.05, .1, .7, .15]
+    print("First we will generate a random sequence of the states to train the model on. The states will ocurr with probabilies\n{} (respectively)\n".format(prob))
+    prob = np.cumsum(prob)
 
+    seq_len = 10000
+    sequence = []
 
-##print(index2([False, False, False, True, True], True))
-#exit()
-MM = MarkovModel(4)
+    for i in range(seq_len):
+        sequence.append(index2(random.random() < prob, True))
 
-for s in sequence:
-    MM.add(s)
-MM.update_transition_matrix()
+    MM = MarkovModel(4)
 
-print(MM.trans)
-print(sum(MM.limit))
+    for s in sequence:
+        MM.add(s)
 
-pred = []
+    print("Now we train the model and get the transition matrix (which has already been np.cumsum'd for us")
+    MM.update_transition_matrix()
 
-for i in range(1000):
-    pred.append(MM.get())
+    print(MM.trans)
+    print("\n")
 
-for i in range(4):
-    print(pred.count(i) / len(pred))
+    pred = []
+
+    for i in range(1000):
+        pred.append(MM.get())
+
+    print("We will now make a new sequence from the model and see if the probabbilities of each state match")
+
+    print([pred.count(i) / len(pred) for i in range(4)])
 
